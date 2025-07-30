@@ -92,10 +92,9 @@ export function updatePhoto() {
         if (businessCardData.personal.photo) {
             profilePhotoContainer.innerHTML = `<img src="${businessCardData.personal.photo}" alt="Foto" class="w-full h-full object-cover">`;
         } else {
-            // Ícone da foto de perfil na cardView - a cor será controlada por applyColors para contrastar
             profilePhotoContainer.innerHTML = `<div class="w-full h-full flex items-center justify-center text-gray-400"><i class="fas fa-user text-2xl"></i></div>`;
-            const icon = profilePhotoContainer.querySelector('i');
-            if (icon) icon.style.color = isColorLight(businessCardData.personal.backgroundColor || '#f9fafb') ? businessCardData.personal.primaryColor : '#ffffff';
+            // A cor do ícone na cardView será definida por applyColors
+            // Não precisamos definir diretamente aqui para não sobrescrever applyColors
         }
     }
 
@@ -168,8 +167,10 @@ export function setBackgroundColor(color) {
     if (backgroundColorHex) backgroundColorHex.value = color;
 }
 
-// Helper para determinar se uma cor é clara ou escura
+// Helper para determinar se uma cor é clara ou escura (para contraste de texto)
 function isColorLight(hexColor) {
+    // Retorna true se a cor for clara (luminosidade > 0.5)
+    if (!hexColor || hexColor.length !== 7) return true; // Default para claro se inválido
     const r = parseInt(hexColor.substring(1, 3), 16);
     const g = parseInt(hexColor.substring(3, 5), 16);
     const b = parseInt(hexColor.substring(5, 7), 16);
@@ -177,7 +178,7 @@ function isColorLight(hexColor) {
     return luminance > 0.5;
 }
 
-// Helper para obter um tom mais claro/escuro de uma cor
+// Helper para obter um tom mais claro/escuro de uma cor (para monocromia)
 function getMonochromaticColor(hex, percent) {
     let R = parseInt(hex.substring(1, 3), 16);
     let G = parseInt(hex.substring(3, 5), 16);
@@ -199,27 +200,44 @@ function getMonochromaticColor(hex, percent) {
     return c;
 }
 
-// Função principal de aplicação de cores
+// Helper para ajustar brilho (mais seguro)
+function adjustBrightness(hex, percent) {
+    const num = parseInt(hex.substring(1), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) + amt;
+    const G = ((num >> 8) & 0x00FF) + amt;
+    const B = (num & 0x0000FF) + amt;
+
+    const clampedR = Math.min(255, Math.max(0, R));
+    const clampedG = Math.min(255, Math.max(0, G));
+    const clampedB = Math.min(255, Math.max(0, B));
+
+    return "#" + (0x1000000 + (clampedR << 16) + (clampedG << 8) + clampedB).toString(16).slice(1);
+}
+
+// Helper para obter a melhor cor de texto (preto ou branco) para um determinado fundo
+function getContrastTextColor(bgColor) {
+    return isColorLight(bgColor) ? '#1f2937' : '#ffffff'; // Dark gray or white
+}
+
+
 export function applyColors() {
     const primaryColor = businessCardData.personal.primaryColor || '#1f2937';
     const backgroundColor = businessCardData.personal.backgroundColor || '#f9fafb';
     
     const isMainBackgroundLight = isColorLight(backgroundColor);
     
-    // Cores para o texto em cima da cor primária (botões principais)
-    const textColorOnPrimaryButtons = isColorLight(primaryColor) ? '#1f2937' : '#ffffff'; 
-    
     // Cores para os "cartões internos" (Contato, Redes Sociais, Serviços)
-    // Se o fundo principal é claro, os cartões internos serão brancos com borda cinza.
-    // Se o fundo principal é escuro, os cartões internos terão um tom monocromático do primário para contraste.
-    const cardBgColor = isMainBackgroundLight ? '#ffffff' : getMonochromaticColor(primaryColor, 50); 
-    const cardBorderColor = isMainBackgroundLight ? '#e5e7eb' : getMonochromaticColor(primaryColor, 70); 
-    const cardHoverBgColor = isMainBackgroundLight ? '#f3f4f6' : getMonochromaticColor(primaryColor, 60);
+    // Se o fundo principal é claro, os cartões internos serão brancos (claro).
+    // Se o fundo principal é escuro, os cartões internos DEVERIAM ser brancos para contraste.
+    const cardBgColor = isMainBackgroundLight ? '#ffffff' : '#ffffff'; // FORÇADO BRANCO SE FUNDO ESCURO
+    const cardBorderColor = isMainBackgroundLight ? '#e5e7eb' : getMonochromaticColor(primaryColor, -10); // Borda mais escura que primary se fundo escuro
+    const cardHoverBgColor = isMainBackgroundLight ? '#f3f4f6' : getMonochromaticColor(primaryColor, -20); // Hover mais escuro que primary se fundo escuro
 
-    // Cores do texto dentro dos cartões internos
-    const isCardLight = isColorLight(cardBgColor);
-    const textColorInsideCards = isCardLight ? primaryColor : '#ffffff'; 
-    const secondaryTextColorInsideCards = isCardLight ? '#6b7280' : '#d1d5db'; 
+    // Cores do texto principal e secundário dentro dos cartões internos
+    // Se o CARD é branco (no tema escuro), o texto deve ser PRIMARY COLOR.
+    const textColorInsideCards = isColorLight(cardBgColor) ? primaryColor : '#ffffff'; 
+    const secondaryTextColorInsideCards = isColorLight(cardBgColor) ? '#6b7280' : '#d1d5db'; 
 
     // Cor do texto do rodapé "Feito por Simplisoft"
     const footerTextColor = isMainBackgroundLight ? '#6b7280' : '#d1d5db'; 
@@ -238,24 +256,61 @@ export function applyColors() {
     
     const hoverColor = adjustBrightness(primaryColor, -10);
 
-    // Regras CSS para o CARDVIEW
+    // Regras CSS para o CARDVIEW (seletividade para não afetar o adminPanel)
     styleTag.innerHTML = `
-        /* Seletividade para o #cardView e elementos relacionados */
+        /* Cores dos botões primários no cardView */
         #cardView .bg-gray-900 { background-color: ${primaryColor} !important; }
         #cardView .hover\\:bg-gray-800:hover { background-color: ${hoverColor} !important; }
-        #cardView .text-white { color: ${textColorOnPrimaryButtons} !important; } 
+        #cardView .text-white { color: ${getContrastTextColor(primaryColor)} !important; } /* Texto nos botões bg-primary */
 
-        /* Cores dos cartões internos (Contato, Redes Sociais, Serviços) e seus textos */
+        /* Cores dos cartões internos (Contato, Redes Sociais, Serviços) e seus textos no cardView */
         #cardView .bg-white { background-color: ${cardBgColor} !important; }
         #cardView .border-gray-100 { border-color: ${cardBorderColor} !important; }
-        #cardView .text-gray-900 { color: ${textColorInsideCards} !important; } 
-        #cardView .text-gray-600 { color: ${secondaryTextColorInsideCards} !important; } 
-        #cardView .text-gray-500 { color: ${secondaryTextColorInsideCards} !important; } 
-        #cardView .bg-gray-100 { background-color: ${cardHoverBgColor} !important; } 
-        #cardView .hover\\:bg-gray-50:hover { background-color: ${cardHoverBgColor} !important; } 
-        #cardView .profile-shadow { box-shadow: 0 0 0 4px ${cardBgColor}, 0 0 0 8px rgba(0, 0, 0, 0.1) !important; } 
         
-        /* Cores para o rodapé (footer) - SEMPRE GLOBAL para o footer */
+        /* Textos dentro da cardView (Nome, Título, Bio, Títulos de seção, Telefone/Email, Serviços) */
+        #cardView h1,
+        #cardView .font-medium, /* Para telefone/email */
+        #cardView h3 { /* Títulos das seções Contato, Redes Sociais */
+            color: ${textColorInsideCards} !important; 
+        }
+        #cardView p.text-sm, /* Bio, labels de telefone/email */
+        #cardView p.text-xs, /* Textos menores */
+        #cardView span.text-sm, /* Preço/Duração do serviço */
+        #cardView span.text-xs /* Nomes das redes sociais */
+        {
+            color: ${secondaryTextColorInsideCards} !important; 
+        }
+        
+        /* Fundo dos ícones de contato e dos botões sociais */
+        #cardView .w-10.h-10.rounded-full, /* Círculos dos ícones de telefone/email */
+        #cardView .grid > a.rounded-xl /* Botões de redes sociais */
+        {
+            background-color: ${cardHoverBgColor} !important; /* Usar o hover color para um tom levemente diferente */
+        }
+        #cardView .w-10.h-10.rounded-full i, /* Ícones de telefone/email dentro dos círculos */
+        #cardView .grid > a.rounded-xl i, /* Ícones de redes sociais */
+        #cardView .grid > a.rounded-xl span /* Texto dos nomes das redes sociais */
+        {
+            color: ${textColorInsideCards} !important; 
+        }
+        #cardView .grid > a.rounded-xl:hover { /* Hover nos botões de redes sociais */
+            background-color: ${cardBorderColor} !important; /* Um tom ligeiramente mais escuro para o hover */
+        }
+
+        /* Hover dos botões brancos principais (Ver serviços, Preencher Formulário, etc.) */
+        #cardView button.bg-white.hover\\:bg-gray-50:hover {
+            background-color: ${cardHoverBgColor} !important;
+        }
+        #cardView button.bg-white i, /* Ícones dentro dos botões brancos */
+        #cardView button.bg-white span /* Texto dentro dos botões brancos */
+        {
+            color: ${textColorInsideCards} !important;
+        }
+        #cardView button.bg-white.border-2.border-gray-200 { /* Bordas dos botões brancos */
+             border-color: ${cardBorderColor} !important;
+        }
+
+        /* Cores para o rodapé (footer) - GLOBALMENTE aplicadas, mas baseadas no background principal */
         .text-xs.text-gray-500 { color: ${footerTextColor} !important; }
         .text-xs.text-gray-500 a { color: ${footerTextColor} !important; }
         .text-xs.text-gray-500 a:hover { color: ${footerLinkHoverColor} !important; }
@@ -264,30 +319,11 @@ export function applyColors() {
         .focus\\:border-gray-900:focus { border-color: ${primaryColor} !important; }
     `;
 
-    // Atualiza a cor da foto de perfil se for um ícone padrão (gray-400)
-    const profilePhotoIcon = document.querySelector('#profilePhotoContainer i.fa-user');
-    if (profilePhotoIcon) {
-        profilePhotoIcon.style.color = textColorInsideCards; 
-    }
-    // Para o adminPhotoPreview (que está no adminPanel), garanta que o ícone permaneça cinza padrão.
-    // Como o adminPanel não é afetado pelo estilo injetado seletivamente para #cardView,
-    // o ícone text-gray-400 no adminPhotoPreview manterá sua cor padrão do Tailwind.
+    // A cor do ícone padrão na foto de perfil da cardView é atualizada em updatePhoto.
+    // O ícone do adminPhotoPreview não é afetado por esses seletores específicos para #cardView.
 }
 
-function adjustBrightness(hex, percent) {
-    const num = parseInt(hex.substring(1), 16);
-    const amt = Math.round(2.55 * percent);
-    const R = (num >> 16) + amt;
-    const G = ((num >> 8) & 0x00FF) + amt;
-    const B = (num & 0x0000FF) + amt;
-
-    const clampedR = Math.min(255, Math.max(0, R));
-    const clampedG = Math.min(255, Math.max(0, G));
-    const clampedB = Math.min(255, Math.max(0, B));
-
-    return "#" + (0x1000000 + (clampedR << 16) + (clampedG << 8) + clampedB).toString(16).slice(1);
-}
-
+// Funções auxiliares (adjustBrightness, formatPhone, etc.) permanecem as mesmas.
 
 export function handlePhotoUpload() {
     const fileInput = document.getElementById('photoUpload');
@@ -318,7 +354,6 @@ export function formatPhone(phone) {
     return phone;
 }
 
-// Social Media Functions
 export function renderSocialMedia() {
     const container = document.getElementById('socialMediaContainer');
     const social = businessCardData.social;
@@ -337,13 +372,14 @@ export function renderSocialMedia() {
     const activeSocials = socialPlatforms.filter(platform => social[platform.key] && social[platform.key].trim() !== '');
 
     if (activeSocials.length === 0) {
-        container.innerHTML = '<div class="col-span-3 text-center text-gray-400 py-4"><p class="text-sm">Nenhuma rede social</p></div>';
+        // A cor será definida pelo CSS injetado de applyColors
+        container.innerHTML = `<div class="col-span-3 text-center"><p class="text-sm">Nenhuma rede social</p></div>`;
         return;
     }
 
     // A cor dos ícones de social media nos cartões internos agora é ajustada por applyColors
     container.innerHTML = activeSocials.map(platform => `
-        <a href="${formatSocialLink(platform.key, social[platform.key])}" target="_blank" class="bg-gray-100 hover:bg-gray-200 text-gray-700 p-4 rounded-xl flex flex-col items-center justify-center space-y-2 transition-all hover-lift">
+        <a href="${formatSocialLink(platform.key, social[platform.key])}" target="_blank" class="bg-gray-100 hover:bg-gray-200 p-4 rounded-xl flex flex-col items-center justify-center space-y-2 transition-all hover-lift">
             <i class="${platform.icon} text-xl"></i>
             <span class="text-xs font-medium">${platform.name}</span>
         </a>
@@ -435,7 +471,8 @@ export function renderServicesList() {
     if (!container) return; 
 
     if (businessCardData.services.length === 0) {
-        container.innerHTML = '<div class="text-center text-gray-500 py-8"><p>Nenhum serviço cadastrado</p></div>';
+        // A cor será definida pelo CSS injetado de applyColors
+        container.innerHTML = `<div class="text-center"><p class="text-sm">Nenhum serviço cadastrado</p></div>`;
         return;
     }
 
@@ -445,12 +482,8 @@ export function renderServicesList() {
                 <div class="flex items-start space-x-3 flex-1">
                     <div class="text-2xl">${service.emoji}</div>
                     <div class="flex-1">
-                        <h4 class="font-semibold text-gray-900 text-lg">${service.name}</h4>
-                        <p class="text-gray-600 text-sm mb-3">${service.description}</p>
-                        <div class="flex flex-wrap gap-2 text-sm">
-                            <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full">${service.price}</span>
-                            <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full">${service.duration}</span>
-                        </div>
+                        <h4 class="font-semibold text-lg">${service.name}</h4> <p class="text-sm mb-3">${service.description}</p> <div class="flex flex-wrap gap-2 text-sm">
+                            <span class="bg-gray-100 px-3 py-1 rounded-full">${service.price}</span> <span class="bg-gray-100 px-3 py-1 rounded-full">${service.duration}</span> </div>
                     </div>
                 </div>
                 <button data-action="contact-service" data-service-name="${service.name}" class="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium transition-colors ml-4">
@@ -566,8 +599,8 @@ export function loadAdminData() {
     const adminContactFormInput = document.getElementById('adminContactForm'); 
 
     if (adminNameInput) adminNameInput.value = businessCardData.personal.name;
-    if (adminTitleInput) adminTitleInput.value = businessCardData.personal.title;
-    if (adminBioInput) adminBioInput.value = businessCardData.personal.bio;
+    if (adminTitleInput) businessCardData.personal.title = adminTitleInput.value;
+    if (adminBioInput) businessCardData.personal.bio = adminBioInput.value;
     if (adminPhoneInput) adminPhoneInput.value = businessCardData.personal.phone;
     if (adminEmailInput) adminEmailInput.value = businessCardData.personal.email;
     
@@ -679,24 +712,25 @@ export function clearServiceForm() {
 }
 
 export function addService() {
-    const name = document.getElementById('serviceName').value.trim();
-    const price = document.getElementById('servicePrice').value.trim();
-    const emoji = document.getElementById('serviceEmoji').value.trim();
-    const duration = document.getElementById('serviceDuration').value.trim();
-    const description = document.getElementById('serviceDesc').value.trim();
+    const name = document.getElementById('serviceName'); // Pega o elemento input
+    const price = document.getElementById('servicePrice');
+    const emoji = document.getElementById('serviceEmoji');
+    const duration = document.getElementById('serviceDuration');
+    const description = document.getElementById('serviceDesc');
 
-    if (!name || !price || !emoji || !duration || !description) {
+    // Valida os valores, não os elementos
+    if (!name.value.trim() || !price.value.trim() || !emoji.value.trim() || !duration.value.trim() || !description.value.trim()) {
         alert('Por favor, preencha todos os campos!');
         return;
     }
 
     const newService = {
         id: Date.now(),
-        name,
-        price,
-        emoji,
-        duration,
-        description
+        name: name.value.trim(),
+        price: price.value.trim(),
+        emoji: emoji.value.trim(),
+        duration: duration.value.trim(),
+        description: description.value.trim()
     };
 
     businessCardData.services.push(newService);
@@ -724,9 +758,12 @@ export function renderAdminServices() {
 
     if (businessCardData.services.length === 0) {
         container.innerHTML = '<div class="text-center text-gray-500 py-8"><p>Nenhum serviço cadastrado</p></div>';
-    } else {
-        container.innerHTML = businessCardData.services.map(service => `
-            <div class="flex items-center justify-between p-4 border-2 border-gray-100 rounded-xl service-item" data-id="${service.id}">
+        return;
+    }
+
+    container.innerHTML = businessCardData.services.map(service => `
+        <div class="p-4 border-2 border-gray-100 rounded-xl service-item" data-id="${service.id}">
+            <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <i class="fas fa-grip-vertical drag-handle text-gray-400 cursor-grab"></i>
                     <div>
@@ -734,7 +771,7 @@ export function renderAdminServices() {
                         <p class="text-sm text-gray-600">${service.description}</p>
                         <div class="flex flex-wrap gap-2 text-sm">
                             <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">${service.price}</span>
-                            <span class="text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded">${service.duration}</span>
+                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">${service.duration}</span>
                         </div>
                     </div>
                 </div>
@@ -742,8 +779,8 @@ export function renderAdminServices() {
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
-        `).join('');
-    }
+        </div>
+    `).join('');
 
     initializeSortableServices();
 }
