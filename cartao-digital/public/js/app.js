@@ -26,6 +26,7 @@ export let businessCardData = {
         location: '',
         contactForm: '' 
     },
+    customLinks: [], // Nova propriedade para links adicionais personalizados
     services: [
         {
             id: 1,
@@ -56,6 +57,10 @@ export function loadData() {
             if (!businessCardData.additional.googleReview) businessCardData.additional.googleReview = '';
             if (!businessCardData.additional.location) businessCardData.additional.location = '';
             if (!businessCardData.additional.contactForm) businessCardData.additional.contactForm = '';
+        }
+        // Garantir que customLinks existe
+        if (!businessCardData.customLinks) {
+            businessCardData.customLinks = [];
         }
         applyColors();
     }
@@ -262,6 +267,14 @@ export function applyColors() {
         #cardView .bg-gray-900 { background-color: ${primaryColor} !important; }
         #cardView .hover\\:bg-gray-800:hover { background-color: ${hoverColor} !important; }
         #cardView .text-white { color: ${getContrastTextColor(primaryColor)} !important; } /* Texto nos botões bg-primary */
+        #cardView button.bg-gray-900 span { color: ${getContrastTextColor(primaryColor)} !important; }
+        #cardView button.bg-gray-900 i { color: ${getContrastTextColor(primaryColor)} !important; }
+        
+        /* Botão Área Administrativa - garantir contraste adequado */
+        #adminBtn { background-color: ${primaryColor} !important; }
+        #adminBtn:hover { background-color: ${hoverColor} !important; }
+        #adminBtn span { color: ${getContrastTextColor(primaryColor)} !important; }
+        #adminBtn i { color: ${getContrastTextColor(primaryColor)} !important; }
 
         /* Cores dos cartões internos (Contato, Redes Sociais, Serviços) e seus textos no cardView */
         #cardView .bg-white { background-color: ${cardBgColor} !important; }
@@ -814,3 +827,114 @@ function initializeSortableServices() {
 export function updateCardPreview() {
     // Esta função está vazia porque o preview em tempo real foi removido para retornar à versão funcional.
 }
+
+// Funções para gerenciar links personalizados
+export function showAddCustomLinkForm() {
+    const form = document.getElementById('addCustomLinkForm');
+    if (form) {
+        form.classList.remove('hidden');
+        document.getElementById('customLinkName').focus();
+    }
+}
+
+export function hideAddCustomLinkForm() {
+    const form = document.getElementById('addCustomLinkForm');
+    if (form) {
+        form.classList.add('hidden');
+        // Limpar campos
+        document.getElementById('customLinkName').value = '';
+        document.getElementById('customLinkUrl').value = '';
+    }
+}
+
+export function addCustomLink() {
+    const name = document.getElementById('customLinkName').value.trim();
+    const url = document.getElementById('customLinkUrl').value.trim();
+    
+    if (!name || !url) {
+        alert('Por favor, preencha o nome e a URL do link.');
+        return;
+    }
+    
+    // Validar URL
+    try {
+        new URL(url);
+    } catch (e) {
+        alert('Por favor, insira uma URL válida.');
+        return;
+    }
+    
+    // Gerar ID único
+    const id = Date.now();
+    
+    // Adicionar link ao array
+    businessCardData.customLinks.push({
+        id: id,
+        name: name,
+        url: url
+    });
+    
+    saveData();
+    renderCustomLinks();
+    renderCustomLinksDisplay();
+    hideAddCustomLinkForm();
+}
+
+export function deleteCustomLink(id) {
+    if (confirm('Tem certeza que deseja excluir este link?')) {
+        businessCardData.customLinks = businessCardData.customLinks.filter(link => link.id !== id);
+        saveData();
+        renderCustomLinks();
+        renderCustomLinksDisplay();
+    }
+}
+
+export function renderCustomLinks() {
+    const container = document.getElementById('customLinksList');
+    if (!container) return;
+    
+    if (businessCardData.customLinks.length === 0) {
+        container.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">Nenhum link adicional configurado</p>';
+        return;
+    }
+    
+    container.innerHTML = businessCardData.customLinks.map(link => `
+        <div class="bg-gray-50 rounded-lg p-4 flex items-center justify-between">
+            <div class="flex-1">
+                <h4 class="font-medium text-gray-900">${link.name}</h4>
+                <p class="text-sm text-gray-600 break-all">${link.url}</p>
+            </div>
+            <button onclick="deleteCustomLink(${link.id})" class="ml-4 text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-colors" data-action="delete-custom-link" data-link-id="${link.id}">
+                <i class="fas fa-trash text-sm"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+export function renderCustomLinksDisplay() {
+    const container = document.getElementById('additionalLinksDisplayContainer');
+    if (!container) return;
+    
+    if (businessCardData.customLinks.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = `
+        <div class="bg-white rounded-2xl p-6 mt-6 shadow-sm border border-gray-100">
+            <h3 class="text-lg font-semibold mb-4">Links Adicionais</h3>
+            <div class="space-y-3">
+                ${businessCardData.customLinks.map(link => `
+                    <a href="${link.url}" target="_blank" class="w-full bg-white hover:bg-gray-50 py-4 rounded-2xl font-semibold transition-all hover-lift border-2 border-gray-200 flex items-center justify-center space-x-3">
+                        <i class="fas fa-external-link-alt text-lg"></i>
+                        <span>${link.name}</span>
+                    </a>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+// Tornar funções globais para uso nos event handlers inline
+window.deleteCustomLink = deleteCustomLink;
+

@@ -34,7 +34,12 @@ import {
     showAddService, 
     hideAddService,
     showContactFormModal, // NEW: Importar para abrir o modal do formulário
-    closeContactFormModal // NEW: Importar para fechar o modal do formulário
+    closeContactFormModal, // NEW: Importar para fechar o modal do formulário
+    showAddCustomLinkForm, // NEW: Importar para mostrar formulário de link personalizado
+    hideAddCustomLinkForm, // NEW: Importar para esconder formulário de link personalizado
+    addCustomLink, // NEW: Importar para adicionar link personalizado
+    renderCustomLinks, // NEW: Importar para renderizar lista de links no admin
+    renderCustomLinksDisplay // NEW: Importar para renderizar links na interface principal
 } from './app.js'; // Caminho para app.js (na mesma pasta)
 
 // Inicialização da aplicação e adição de Event Listeners
@@ -42,6 +47,8 @@ document.addEventListener('DOMContentLoaded', function() {
     loadData(); // Carrega os dados do localStorage
     updateDisplay(); // Atualiza a visualização do cartão
     renderSocialMedia(); // Renderiza as redes sociais
+    renderCustomLinks(); // Renderiza os links personalizados no admin
+    renderCustomLinksDisplay(); // Renderiza os links personalizados na interface principal
     updateAdditionalButtons(); // Garante que botões adicionais apareçam/sumam (incluindo o novo forms)
     applyColors(); // Aplica as cores salvas
     
@@ -122,6 +129,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const backToCardViewBtn = document.getElementById('backToCardViewBtn');
     if (backToCardViewBtn) backToCardViewBtn.addEventListener('click', showCardView);
 
+    // NEW: Custom Links Buttons
+    const addCustomLinkBtn = document.getElementById('addCustomLinkBtn');
+    if (addCustomLinkBtn) addCustomLinkBtn.addEventListener('click', showAddCustomLinkForm);
+
+    const saveCustomLinkBtn = document.getElementById('saveCustomLinkBtn');
+    if (saveCustomLinkBtn) saveCustomLinkBtn.addEventListener('click', addCustomLink);
+
+    const cancelCustomLinkBtn = document.getElementById('cancelCustomLinkBtn');
+    if (cancelCustomLinkBtn) cancelCustomLinkBtn.addEventListener('click', hideAddCustomLinkForm);
+
 
     // --- Event delegation for dynamically created elements (like "Contratar" and "Excluir" service buttons) ---
     const servicesListContainer = document.getElementById('servicesList');
@@ -145,6 +162,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 const serviceId = parseInt(targetButton.dataset.serviceId);
                 if (!isNaN(serviceId)) {
                     deleteService(serviceId);
+                }
+            }
+        });
+    }
+
+    // NEW: Event delegation for custom links delete buttons
+    const customLinksListContainer = document.getElementById('customLinksList');
+    if (customLinksListContainer) {
+        customLinksListContainer.addEventListener('click', function(event) {
+            const targetButton = event.target.closest('[data-action="delete-custom-link"]');
+            if (targetButton) {
+                const linkId = parseInt(targetButton.dataset.linkId);
+                if (!isNaN(linkId)) {
+                    deleteCustomLink(linkId);
                 }
             }
         });

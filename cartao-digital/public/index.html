@@ -139,6 +139,9 @@
             <h3 class="text-lg font-semibold mb-4">Redes Sociais</h3> <div class="grid grid-cols-3 gap-3" id="socialMediaContainer">
                 </div>
         </div>
+        <div id="additionalLinksDisplayContainer" class="space-y-4">
+        </div>
+
 
         <div class="text-center py-8 space-y-4">
             <button id="adminBtn" class="bg-gray-900 hover:bg-gray-800 text-white px-6 py-3 rounded-xl transition-colors text-sm font-medium">
@@ -289,6 +292,41 @@
                     <button id="saveSocialMediaBtn" class="w-full bg-gray-900 hover:bg-gray-800 text-white py-3 rounded-xl font-semibold transition-colors">
                         Salvar Redes Sociais e Links Adicionais
                     </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-900">Links Adicionais Personalizados</h3>
+                    <button id="addCustomLinkBtn" class="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm">
+                        <i class="fas fa-plus mr-2"></i>Adicionar Link
+                    </button>
+                </div>
+
+                <div id="addCustomLinkForm" class="hidden bg-gray-50 rounded-xl p-4 mb-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nome do Link</label>
+                            <input type="text" id="customLinkName" class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-gray-900 focus:outline-none transition-colors" placeholder="Ex: Meu Portfólio">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">URL do Link</label>
+                            <input type="url" id="customLinkUrl" class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-gray-900 focus:outline-none transition-colors" placeholder="https://exemplo.com">
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3 mt-4">
+                        <button id="saveCustomLinkBtn" class="flex-1 bg-gray-900 hover:bg-gray-800 text-white py-2 rounded-lg font-medium transition-colors">
+                            Salvar
+                        </button>
+                        <button id="cancelCustomLinkBtn" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg font-medium transition-colors">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+
+                <div id="customLinksList" class="space-y-3">
+                    <p class="text-sm text-gray-500 text-center py-4">Nenhum link adicional configurado</p>
                 </div>
             </div>
 
