@@ -10,8 +10,8 @@ export let businessCardData = {
         phone: '5511999999999',
         email: 'seu@email.com',
         photo: null,
-        primaryColor: '#1f2937',
-        backgroundColor: '#f9fafb'
+        primaryColor: '#1f2937', // Cor principal padrão (quase preto/azul escuro)
+        backgroundColor: '#f9fafb' // Cor de fundo padrão (quase branco)
     },
     social: {
         instagram: '',
@@ -24,7 +24,7 @@ export let businessCardData = {
     additional: {
         googleReview: '',
         location: '',
-        contactForm: '' // NEW: Nova propriedade para o link do formulário de contato
+        contactForm: '' 
     },
     services: [
         {
@@ -50,13 +50,12 @@ export function loadData() {
     const saved = localStorage.getItem('businessCardData');
     if (saved) {
         businessCardData = JSON.parse(saved);
-        // Garantir que businessCardData.additional exista e tenha as propriedades necessárias
         if (!businessCardData.additional) {
             businessCardData.additional = { googleReview: '', location: '', contactForm: '' };
         } else {
             if (!businessCardData.additional.googleReview) businessCardData.additional.googleReview = '';
             if (!businessCardData.additional.location) businessCardData.additional.location = '';
-            if (!businessCardData.additional.contactForm) businessCardData.additional.contactForm = ''; // NEW: Garante que contactForm exista
+            if (!businessCardData.additional.contactForm) businessCardData.additional.contactForm = '';
         }
         applyColors();
     }
@@ -86,25 +85,31 @@ export function updateDisplay() {
 }
 
 export function updatePhoto() {
-    const photoContainers = [
-        document.getElementById('profilePhotoContainer'), 
-        document.getElementById('adminPhotoPreview')
-    ];
-    
-    photoContainers.forEach(container => {
-        if (container) {
-            if (businessCardData.personal.photo) {
-                container.innerHTML = `<img src="${businessCardData.personal.photo}" alt="Foto" class="w-full h-full object-cover">`;
-            } else {
-                const iconSize = container.id === 'profilePhotoContainer' ? 'text-2xl' : 'text-xl';
-                container.innerHTML = `<div class="w-full h-full flex items-center justify-center text-gray-400"><i class="fas fa-user ${iconSize}"></i></div>`;
-            }
+    const profilePhotoContainer = document.getElementById('profilePhotoContainer'); 
+    const adminPhotoPreview = document.getElementById('adminPhotoPreview');
+
+    if (profilePhotoContainer) {
+        if (businessCardData.personal.photo) {
+            profilePhotoContainer.innerHTML = `<img src="${businessCardData.personal.photo}" alt="Foto" class="w-full h-full object-cover">`;
+        } else {
+            // Ícone da foto de perfil na cardView - a cor será controlada por applyColors para contrastar
+            profilePhotoContainer.innerHTML = `<div class="w-full h-full flex items-center justify-center text-gray-400"><i class="fas fa-user text-2xl"></i></div>`;
+            const icon = profilePhotoContainer.querySelector('i');
+            if (icon) icon.style.color = isColorLight(businessCardData.personal.backgroundColor || '#f9fafb') ? businessCardData.personal.primaryColor : '#ffffff';
         }
-    });
+    }
+
+    if (adminPhotoPreview) {
+        if (businessCardData.personal.photo) {
+            adminPhotoPreview.innerHTML = `<img src="${businessCardData.personal.photo}" alt="Foto" class="w-full h-full object-cover">`;
+        } else {
+            // Ícone da foto de perfil no admin - DEVE PERMANECER CINZA padrão
+            adminPhotoPreview.innerHTML = `<div class="w-full h-full flex items-center justify-center text-gray-400"><i class="fas fa-user text-xl"></i></div>`;
+        }
+    }
 }
 
 export function updateAdditionalButtons() {
-    // Show/hide Google Forms button
     const contactFormBtn = document.getElementById('contactFormBtn');
     if (contactFormBtn) {
         if (businessCardData.additional.contactForm && businessCardData.additional.contactForm.trim() !== '') {
@@ -114,7 +119,6 @@ export function updateAdditionalButtons() {
         }
     }
 
-    // Show/hide Google Review button
     const googleReviewBtn = document.getElementById('googleReviewBtn');
     if (googleReviewBtn) { 
         if (businessCardData.additional.googleReview && businessCardData.additional.googleReview.trim() !== '') {
@@ -124,7 +128,6 @@ export function updateAdditionalButtons() {
         }
     }
 
-    // Show/hide Location button
     const locationBtn = document.getElementById('locationBtn');
     if (locationBtn) { 
         if (businessCardData.additional.location && businessCardData.additional.location.trim() !== '') {
@@ -165,38 +168,126 @@ export function setBackgroundColor(color) {
     if (backgroundColorHex) backgroundColorHex.value = color;
 }
 
+// Helper para determinar se uma cor é clara ou escura
+function isColorLight(hexColor) {
+    const r = parseInt(hexColor.substring(1, 3), 16);
+    const g = parseInt(hexColor.substring(3, 5), 16);
+    const b = parseInt(hexColor.substring(5, 7), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5;
+}
+
+// Helper para obter um tom mais claro/escuro de uma cor
+function getMonochromaticColor(hex, percent) {
+    let R = parseInt(hex.substring(1, 3), 16);
+    let G = parseInt(hex.substring(3, 5), 16);
+    let B = parseInt(hex.substring(5, 7), 16);
+
+    R = parseInt(R * (100 + percent) / 100);
+    G = parseInt(G * (100 + percent) / 100);
+    B = parseInt(B * (100 + percent) / 100);
+
+    R = (R < 255) ? R : 255;  
+    G = (G < 255) ? G : 255;  
+    B = (B < 255) ? B : 255;  
+
+    R = (R > 0) ? R : 0;  
+    G = (G > 0) ? G : 0;  
+    B = (B > 0) ? B : 0;  
+
+    let c = "#" + ((1 << 24) + (R << 16) + (G << 8) + B).toString(16).slice(1);
+    return c;
+}
+
+// Função principal de aplicação de cores
 export function applyColors() {
     const primaryColor = businessCardData.personal.primaryColor || '#1f2937';
     const backgroundColor = businessCardData.personal.backgroundColor || '#f9fafb';
     
+    const isMainBackgroundLight = isColorLight(backgroundColor);
+    
+    // Cores para o texto em cima da cor primária (botões principais)
+    const textColorOnPrimaryButtons = isColorLight(primaryColor) ? '#1f2937' : '#ffffff'; 
+    
+    // Cores para os "cartões internos" (Contato, Redes Sociais, Serviços)
+    // Se o fundo principal é claro, os cartões internos serão brancos com borda cinza.
+    // Se o fundo principal é escuro, os cartões internos terão um tom monocromático do primário para contraste.
+    const cardBgColor = isMainBackgroundLight ? '#ffffff' : getMonochromaticColor(primaryColor, 50); 
+    const cardBorderColor = isMainBackgroundLight ? '#e5e7eb' : getMonochromaticColor(primaryColor, 70); 
+    const cardHoverBgColor = isMainBackgroundLight ? '#f3f4f6' : getMonochromaticColor(primaryColor, 60);
+
+    // Cores do texto dentro dos cartões internos
+    const isCardLight = isColorLight(cardBgColor);
+    const textColorInsideCards = isCardLight ? primaryColor : '#ffffff'; 
+    const secondaryTextColorInsideCards = isCardLight ? '#6b7280' : '#d1d5db'; 
+
+    // Cor do texto do rodapé "Feito por Simplisoft"
+    const footerTextColor = isMainBackgroundLight ? '#6b7280' : '#d1d5db'; 
+    const footerLinkHoverColor = primaryColor; 
+
+    // 1. Aplica a cor de fundo principal (body)
     document.body.style.background = `linear-gradient(135deg, ${backgroundColor} 0%, ${adjustBrightness(backgroundColor, -5)} 100%)`;
     
-    let style = document.getElementById('colorStyle');
-    if (!style) {
-        style = document.createElement('style');
-        style.id = 'colorStyle';
-        document.head.appendChild(style);
+    // 2. Aplica cores dinamicamente via tag <style> para elementos do CARTÃO PRINCIPAL (#cardView)
+    let styleTag = document.getElementById('colorStyle');
+    if (!styleTag) {
+        styleTag = document.createElement('style');
+        styleTag.id = 'colorStyle';
+        document.head.appendChild(styleTag);
     }
+    
     const hoverColor = adjustBrightness(primaryColor, -10);
-    style.innerHTML = `
-        .bg-gray-900 { background-color: ${primaryColor} !important; }
-        .hover\\:bg-gray-800:hover { background-color: ${hoverColor} !important; }
-        .text-gray-900 { color: ${primaryColor} !important; }
-        .border-gray-900 { border-color: ${primaryColor} !important; }
+
+    // Regras CSS para o CARDVIEW
+    styleTag.innerHTML = `
+        /* Seletividade para o #cardView e elementos relacionados */
+        #cardView .bg-gray-900 { background-color: ${primaryColor} !important; }
+        #cardView .hover\\:bg-gray-800:hover { background-color: ${hoverColor} !important; }
+        #cardView .text-white { color: ${textColorOnPrimaryButtons} !important; } 
+
+        /* Cores dos cartões internos (Contato, Redes Sociais, Serviços) e seus textos */
+        #cardView .bg-white { background-color: ${cardBgColor} !important; }
+        #cardView .border-gray-100 { border-color: ${cardBorderColor} !important; }
+        #cardView .text-gray-900 { color: ${textColorInsideCards} !important; } 
+        #cardView .text-gray-600 { color: ${secondaryTextColorInsideCards} !important; } 
+        #cardView .text-gray-500 { color: ${secondaryTextColorInsideCards} !important; } 
+        #cardView .bg-gray-100 { background-color: ${cardHoverBgColor} !important; } 
+        #cardView .hover\\:bg-gray-50:hover { background-color: ${cardHoverBgColor} !important; } 
+        #cardView .profile-shadow { box-shadow: 0 0 0 4px ${cardBgColor}, 0 0 0 8px rgba(0, 0, 0, 0.1) !important; } 
+        
+        /* Cores para o rodapé (footer) - SEMPRE GLOBAL para o footer */
+        .text-xs.text-gray-500 { color: ${footerTextColor} !important; }
+        .text-xs.text-gray-500 a { color: ${footerTextColor} !important; }
+        .text-xs.text-gray-500 a:hover { color: ${footerLinkHoverColor} !important; }
+
+        /* Ajuste para input focus em ambos os painéis (admin e card) */
         .focus\\:border-gray-900:focus { border-color: ${primaryColor} !important; }
     `;
+
+    // Atualiza a cor da foto de perfil se for um ícone padrão (gray-400)
+    const profilePhotoIcon = document.querySelector('#profilePhotoContainer i.fa-user');
+    if (profilePhotoIcon) {
+        profilePhotoIcon.style.color = textColorInsideCards; 
+    }
+    // Para o adminPhotoPreview (que está no adminPanel), garanta que o ícone permaneça cinza padrão.
+    // Como o adminPanel não é afetado pelo estilo injetado seletivamente para #cardView,
+    // o ícone text-gray-400 no adminPhotoPreview manterá sua cor padrão do Tailwind.
 }
 
 function adjustBrightness(hex, percent) {
-    const num = parseInt(hex.replace("#", ""), 16);
+    const num = parseInt(hex.substring(1), 16);
     const amt = Math.round(2.55 * percent);
     const R = (num >> 16) + amt;
-    const G = (num >> 8 & 0x00FF) + amt;
+    const G = ((num >> 8) & 0x00FF) + amt;
     const B = (num & 0x0000FF) + amt;
-    return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
-        (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
-        (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+
+    const clampedR = Math.min(255, Math.max(0, R));
+    const clampedG = Math.min(255, Math.max(0, G));
+    const clampedB = Math.min(255, Math.max(0, B));
+
+    return "#" + (0x1000000 + (clampedR << 16) + (clampedG << 8) + clampedB).toString(16).slice(1);
 }
+
 
 export function handlePhotoUpload() {
     const fileInput = document.getElementById('photoUpload');
@@ -212,7 +303,6 @@ export function handlePhotoUpload() {
         reader.onload = function(e) {
             businessCardData.personal.photo = e.target.result;
             updatePhoto();
-            // updateCardPreview(); // Não usado nesta versão
         };
         reader.readAsDataURL(file);
     }
@@ -239,7 +329,7 @@ export function renderSocialMedia() {
         { key: 'instagram', icon: 'fab fa-instagram', name: 'Instagram' },
         { key: 'linkedin', icon: 'fab fa-linkedin', name: 'LinkedIn' },
         { key: 'website', icon: 'fas fa-globe', name: 'Website' },
-        { key: 'youtube', icon: 'fab fa-youtube', name: 'YouTube' },
+        { key: 'youtube', 'icon': 'fab fa-youtube', name: 'YouTube' },
         { key: 'tiktok', icon: 'fab fa-tiktok', name: 'TikTok' },
         { key: 'facebook', icon: 'fab fa-facebook', name: 'Facebook' }
     ];
@@ -251,6 +341,7 @@ export function renderSocialMedia() {
         return;
     }
 
+    // A cor dos ícones de social media nos cartões internos agora é ajustada por applyColors
     container.innerHTML = activeSocials.map(platform => `
         <a href="${formatSocialLink(platform.key, social[platform.key])}" target="_blank" class="bg-gray-100 hover:bg-gray-200 text-gray-700 p-4 rounded-xl flex flex-col items-center justify-center space-y-2 transition-all hover-lift">
             <i class="${platform.icon} text-xl"></i>
@@ -309,17 +400,12 @@ export function closeServicesModal() {
     document.getElementById('servicesModal').classList.add('hidden');
 }
 
-// NEW: Contact Form Modal Functions
 export function showContactFormModal() {
     const contactFormModal = document.getElementById('contactFormModal');
     const googleFormIframe = document.getElementById('googleFormIframe');
 
     if (contactFormModal && googleFormIframe) {
         const formLink = businessCardData.additional.contactForm;
-        // Importante: Google Forms requer o link "incorporar" (embed)
-        // Se o usuário fornecer um link de compartilhamento normal (forms.gle/...),
-        // precisamos tentar convertê-lo para o formato de incorporação.
-        // Ex: forms.gle/XYZ -> forms.gle/d/e/XYZ/viewform?embedded=true
         let embedLink = formLink;
         if (formLink.includes('forms.gle/') && !formLink.includes('/viewform?embedded=true')) {
             const formId = formLink.split('forms.gle/')[1];
@@ -338,7 +424,7 @@ export function closeContactFormModal() {
     const googleFormIframe = document.getElementById('googleFormIframe');
     if (contactFormModal && googleFormIframe) {
         contactFormModal.classList.add('hidden');
-        googleFormIframe.src = ''; // Limpa o src do iframe ao fechar para parar qualquer carregamento
+        googleFormIframe.src = ''; 
     }
 }
 
@@ -404,7 +490,7 @@ END:VCARD`;
 }
 
 // Login Functions
-export function showLogin() { // <--- GARANTIR QUE showLogin ESTÁ EXPORTADA AQUI
+export function showLogin() { 
     document.getElementById('loginModal').classList.remove('hidden');
     document.getElementById('loginUser').focus();
 }
@@ -477,7 +563,7 @@ export function loadAdminData() {
     const adminWebsiteInput = document.getElementById('adminWebsite');
     const adminGoogleReviewInput = document.getElementById('adminGoogleReview');
     const adminLocationInput = document.getElementById('adminLocation');
-    const adminContactFormInput = document.getElementById('adminContactForm'); // NEW: Campo do formulário de contato
+    const adminContactFormInput = document.getElementById('adminContactForm'); 
 
     if (adminNameInput) adminNameInput.value = businessCardData.personal.name;
     if (adminTitleInput) adminTitleInput.value = businessCardData.personal.title;
@@ -499,7 +585,6 @@ export function loadAdminData() {
     if (adminTiktokInput) adminTiktokInput.value = businessCardData.social.tiktok;
     if (adminWebsiteInput) adminWebsiteInput.value = businessCardData.social.website;
 
-    // NEW: Campo do formulário de contato
     if (adminContactFormInput) adminContactFormInput.value = businessCardData.additional.contactForm || '';
     
     // Additional features
@@ -543,7 +628,7 @@ export function saveSocialMedia() {
     const adminWebsiteInput = document.getElementById('adminWebsite');
     const adminGoogleReviewInput = document.getElementById('adminGoogleReview');
     const adminLocationInput = document.getElementById('adminLocation');
-    const adminContactFormInput = document.getElementById('adminContactForm'); // NEW: Campo do formulário de contato
+    const adminContactFormInput = document.getElementById('adminContactForm'); 
 
     if (adminInstagramInput) businessCardData.social.instagram = adminInstagramInput.value;
     if (adminFacebookInput) businessCardData.social.facebook = adminFacebookInput.value;
@@ -552,10 +637,8 @@ export function saveSocialMedia() {
     if (adminTiktokInput) businessCardData.social.tiktok = adminTiktokInput.value;
     if (adminWebsiteInput) businessCardData.social.website = adminWebsiteInput.value;
 
-    // NEW: Salva o link do formulário de contato
     if (adminContactFormInput) businessCardData.additional.contactForm = adminContactFormInput.value;
     
-    // Save additional features
     if (adminGoogleReviewInput) businessCardData.additional.googleReview = adminGoogleReviewInput.value;
     if (adminLocationInput) businessCardData.additional.location = adminLocationInput.value;
     
@@ -649,8 +732,8 @@ export function renderAdminServices() {
                     <div>
                         <h4 class="font-semibold text-gray-900">${service.name}</h4>
                         <p class="text-sm text-gray-600">${service.description}</p>
-                        <div class="flex items-center space-x-2 mt-1">
-                            <span class="text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded">${service.price}</span>
+                        <div class="flex flex-wrap gap-2 text-sm">
+                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">${service.price}</span>
                             <span class="text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded">${service.duration}</span>
                         </div>
                     </div>
@@ -691,7 +774,6 @@ function initializeSortableServices() {
     }
 }
 
-// A função updateCardPreview e related previewBlockTemplates não são necessárias nesta versão funcional.
 export function updateCardPreview() {
-    // Esta função pode ser deixada vazia, pois nesta versão, não há um preview em tempo real ao lado.
+    // Esta função está vazia porque o preview em tempo real foi removido para retornar à versão funcional.
 }
