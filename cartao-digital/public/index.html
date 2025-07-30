@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartão de Visitas Digital</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div id="loginModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-lock text-white text-xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">Acesso Admin</h2>
+                <p class="text-gray-600 mt-2">Entre para editar seu cartão</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <input type="text" id="loginUser" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-gray-900 focus:outline-none transition-colors" placeholder="Usuário">
+                </div>
+                
+                <div>
+                    <input type="password" id="loginPassword" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-gray-900 focus:outline-none transition-colors" placeholder="Senha">
+                </div>
+                
+                <div id="loginError" class="hidden text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg"></div>
+                
+                <div class="flex space-x-3">
+                    <button id="loginSubmitBtn" class="flex-1 bg-gray-900 hover:bg-gray-800 text-white py-3 rounded-xl font-semibold transition-colors">
+                        Entrar
+                    </button>
+                    <button id="cancelLoginBtn" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-xl font-semibold transition-colors">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="servicesModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Meus Serviços</h2>
+                <button id="closeServicesModalBtn" class="text-gray-500 hover:text-gray-700 p-2">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="servicesList" class="space-y-4">
+                </div>
+        </div>
+    </div>
+
+    <div id="contactFormModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Formulário de Contato</h2>
+                <button id="closeContactFormModalBtn" class="text-gray-500 hover:text-gray-700 p-2">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="w-full h-[60vh]"> <iframe id="googleFormIframe" src="" frameborder="0" class="w-full h-full rounded-lg"></iframe>
+            </div>
+            <p class="text-sm text-gray-500 mt-4 text-center">Powered by Google Forms</p>
+        </div>
+    </div>
+
+    <nav class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-40 border-b border-gray-200">
+        <div class="max-w-md mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-id-card text-white text-sm"></i>
+                    </div>
+                    <h1 class="text-lg font-bold text-gray-900">Cartão Digital</h1>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="logoutBtn" class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Sair
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="cardView" class="max-w-md mx-auto px-4 py-8">
+        <div class="text-center mb-8 fade-in">
+            <div class="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden profile-shadow bg-gray-200" id="profilePhotoContainer">
+                <div class="w-full h-full flex items-center justify-center text-gray-400">
+                    <i class="fas fa-user text-2xl"></i>
+                </div>
+            </div>
+            
+            <h1 class="text-2xl font-bold text-gray-900 mb-2" id="displayName">Seu Nome</h1>
+            <p class="text-gray-600 mb-4" id="displayTitle">Sua Profissão</p>
+            <p class="text-sm text-gray-500 leading-relaxed max-w-xs mx-auto" id="displayBio">Sua descrição profissional</p>
+        </div>
+
+        <div class="space-y-4 mb-8">
+            <button id="whatsappBtn" class="w-full bg-gray-900 hover:bg-gray-800 text-white py-4 rounded-2xl font-semibold transition-all hover-lift flex items-center justify-center space-x-3">
+                <i class="fab fa-whatsapp text-xl"></i>
+                <span>Enviar mensagem</span>
+            </button>
+            
+            <button id="servicesModalBtn" class="w-full bg-white hover:bg-gray-50 text-gray-900 py-4 rounded-2xl font-semibold transition-all hover-lift border-2 border-gray-200 flex items-center justify-center space-x-3">
+                <i class="fas fa-briefcase text-lg"></i>
+                <span>Ver serviços</span>
+            </button>
+            
+            <button id="contactFormBtn" class="hidden w-full bg-white hover:bg-gray-50 text-gray-900 py-4 rounded-2xl font-semibold transition-all hover-lift border-2 border-gray-200 flex items-center justify-center space-x-3">
+                <i class="fas fa-file-alt text-lg"></i>
+                <span>Preencher Formulário</span>
+            </button>
+
+            <button id="saveContactBtn" class="w-full bg-white hover:bg-gray-50 text-gray-900 py-4 rounded-2xl font-semibold transition-all hover-lift border-2 border-gray-200 flex items-center justify-center space-x-3">
+                <i class="fas fa-download text-lg"></i>
+                <span>Salvar contato</span>
+            </button>
+
+            <button id="googleReviewBtn" class="hidden w-full bg-white hover:bg-gray-50 text-gray-900 py-4 rounded-2xl font-semibold transition-all hover-lift border-2 border-gray-200 flex items-center justify-center space-x-3">
+                <i class="fab fa-google text-lg"></i>
+                <span>Avaliar no Google</span>
+            </button>
+
+            <button id="locationBtn" class="hidden w-full bg-white hover:bg-gray-50 text-gray-900 py-4 rounded-2xl font-semibold transition-all hover-lift border-2 border-gray-200 flex items-center justify-center space-x-3">
+                <i class="fas fa-map-marker-alt text-lg"></i>
+                <span>Ver localização</span>
+            </button>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Contato</h3>
+            <div class="space-y-3">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-phone text-gray-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Telefone</p>
+                        <p class="font-medium text-gray-900" id="displayPhone">(11) 99999-9999</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-envelope text-gray-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">E-mail</p>
+                        <p class="font-medium text-gray-900 text-sm" id="displayEmail">seu@email.com</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Redes Sociais</h3>
+            <div class="grid grid-cols-3 gap-3" id="socialMediaContainer">
+                </div>
+        </div>
+
+        <div class="text-center py-8 space-y-4">
+            <button id="adminBtn" class="bg-gray-900 hover:bg-gray-800 text-white px-6 py-3 rounded-xl transition-colors text-sm font-medium">
+                <i class="fas fa-cog mr-2"></i>
+                <span id="viewToggle">Área Administrativa</span>
+            </button>
+            
+            <p class="text-xs text-gray-500">
+                Feito por <a href="https://wa.me/+5511999999999" target="_blank" class="text-gray-700 hover:text-gray-900 font-medium transition-colors">Simplisoft</a>
+            </p>
+        </div>
+    </div>
+
+    <div id="adminPanel" class="hidden max-w-2xl mx-auto px-4 py-8">
+        <div class="space-y-8">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-6">Informações Pessoais</h3>
+                
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Foto de Perfil</label>
+                        <div class="flex items-center space-x-4">
+                            <div id="adminPhotoPreview" class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                                <i class="fas fa-user text-gray-400 text-xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <input type="file" id="photoUpload" accept="image/*" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-gray-900 focus:outline-none transition-colors">
+                                <p class="text-xs text-gray-500 mt-2">JPG, PNG (máx. 2MB)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nome Completo</label>
+                        <input type="text" id="adminName" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-gray-900 focus:outline-none transition-colors" placeholder="Seu nome completo">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Profissão/Cargo</label>
+                        <input type="text" id="adminTitle" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-gray-900 focus:outline-none transition-colors" placeholder="Ex: Designer Gráfico">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
+                        <textarea id="adminBio" rows="3" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-gray-900 focus:outline-none transition-colors resize-none" placeholder="Descreva sua experiência"></textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
+                            <input type="text" id="adminPhone" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-gray-900 focus:outline-none transition-colors" placeholder="(11) 99999-9999">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
+                            <input type="email" id="adminEmail" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-gray-900 focus:outline-none transition-colors" placeholder="seu@email.com">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Cor Principal</label>
+                        <div class="flex items-center space-x-4">
+                            <input type="color" id="primaryColorPicker" class="w-12 h-10 border-2 border-gray-200 rounded-lg cursor-pointer">
+                            <input type="text" id="primaryColorHex" class="flex-1 border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-gray-900 focus:outline-none transition-colors" placeholder="#1f2937" maxlength="7">
+                        </div>
+                        <div class="flex space-x-2 mt-2">
+                            <button class="w-8 h-8 bg-gray-800 rounded-full border-2 border-gray-300 hover:border-gray-500" data-color="#1f2937" data-target="primary"></button>
+                            <button class="w-8 h-8 bg-black rounded-full border-2 border-gray-300 hover:border-gray-500" data-color="#000000" data-target="primary"></button>
+                            <button class="w-8 h-8 bg-gray-700 rounded-full border-2 border-gray-300 hover:border-gray-500" data-color="#374151" data-target="primary"></button>
+                            <button class="w-8 h-8 bg-blue-700 rounded-full border-2 border-gray-300 hover:border-gray-500" data-color="#1e40af" data-target="primary"></button>
+                            <button class="w-8 h-8 bg-purple-600 rounded-full border-2 border-gray-300 hover:border-gray-500" data-color="#7c3aed" data-target="primary"></button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Cor de Fundo</label>
+                        <div class="flex items-center space-x-4">
+                            <input type="color" id="backgroundColorPicker" class="w-12 h-10 border-2 border-gray-200 rounded-lg cursor-pointer">
+                            <input type="text" id="backgroundColorHex" class="flex-1 border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-gray-900 focus:outline-none transition-colors" placeholder="#f9fafb" maxlength="7">
+                        </div>
+                        <div class="flex space-x-2 mt-2">
+                            <button class="w-8 h-8 bg-gray-50 rounded-full border-2 border-gray-300 hover:border-gray-500" data-color="#f9fafb" data-target="background"></button>
+                            <button class="w-8 h-8 bg-white rounded-full border-2 border-gray-300 hover:border-gray-500" data-color="#ffffff" data-target="background"></button>
+                            <button class="w-8 h-8 bg-gray-100 rounded-full border-2 border-gray-300 hover:border-gray-500" data-color="#f3f4f6" data-target="background"></button>
+                            <button class="w-8 h-8 bg-gray-200 rounded-full border-2 border-gray-300 hover:border-gray-500" data-color="#e5e7eb" data-target="background"></button>
+                            <button class="w-8 h-8 bg-gray-800 rounded-full border-2 border-gray-300 hover:border-gray-500" data-color="#1f2937" data-target="background"></button>
+                        </div>
+                    </div>
+                    
+                    <button id="savePersonalInfoBtn" class="w-full bg-gray-900 hover:bg-gray-800 text-white py-3 rounded-xl font-semibold transition-colors">
+                        Salvar Informações
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-6">Redes Sociais e Links Adicionais</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Instagram</label>
+                        <input type="text" id="adminInstagram" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-gray-900 focus:outline-none transition-colors" placeholder="@seuusuario">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">LinkedIn</label>
+                        <input type="text" id="adminLinkedin" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-gray-900 focus:outline-none transition-colors" placeholder="Link do perfil">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Website</label>
+                        <input type="text" id="adminWebsite" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-gray-900 focus:outline-none transition-colors" placeholder="https://seusite.com">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">YouTube</label>
+                        <input type="text" id="adminYoutube" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-gray-900 focus:outline-none transition-colors" placeholder="Link do canal">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">TikTok</label>
+                        <input type="text" id="adminTiktok" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-gray-900 focus:outline-none transition-colors" placeholder="@seuusuario">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Facebook</label>
+                        <input type="text" id="adminFacebook" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-gray-900 focus:outline-none transition-colors" placeholder="Link do perfil">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Link do Formulário de Contato (Google Forms)</label>
+                        <input type="url" id="adminContactForm" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-gray-900 focus:outline-none transition-colors" placeholder="https://forms.gle/seulink">
+                        <p class="text-xs text-gray-500 mt-1">Cole o link de compartilhamento do Google Forms</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Avaliação no Google</label>
+                        <input type="text" id="adminGoogleReview" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-gray-900 focus:outline-none transition-colors" placeholder="Link para avaliar no Google">
+                        <p class="text-xs text-gray-500 mt-1">Cole o link direto para avaliação do seu negócio</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Localização (Google Maps)</label>
+                        <input type="text" id="adminLocation" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-gray-900 focus:outline-none transition-colors" placeholder="Link do Google Maps">
+                        <p class="text-xs text-gray-500 mt-1">Cole o link de compartilhamento do Google Maps</p>
+                    </div>
+                    
+                    <button id="saveSocialMediaBtn" class="w-full bg-gray-900 hover:bg-gray-800 text-white py-3 rounded-xl font-semibold transition-colors">
+                        Salvar Redes Sociais e Links Adicionais
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-900">Serviços</h3>
+                    <button id="addServiceFormToggleBtn" class="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm">
+                        <i class="fas fa-plus mr-2"></i>Adicionar
+                    </button>
+                </div>
+
+                <div id="addServiceForm" class="hidden bg-gray-50 rounded-xl p-4 mb-6">
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nome do Serviço</label>
+                                <input type="text" id="serviceName" class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-gray-900 focus:outline-none transition-colors">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Preço</label>
+                                <input type="text" id="servicePrice" class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-gray-900 focus:outline-none transition-colors" placeholder="R$ 150,00">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Emoji</label>
+                                <input type="text" id="serviceEmoji" class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-gray-900 focus:outline-none transition-colors" placeholder="💼">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Duração</label>
+                                <input type="text" id="serviceDuration" class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-gray-900 focus:outline-none transition-colors" placeholder="2 horas">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
+                            <textarea id="serviceDesc" rows="2" class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-gray-900 focus:outline-none transition-colors resize-none"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3 mt-4">
+                        <button id="addServiceBtn" class="flex-1 bg-gray-900 hover:bg-gray-800 text-white py-2 rounded-lg font-medium transition-colors">
+                            Salvar
+                        </button>
+                        <button id="cancelAddServiceBtn" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg font-medium transition-colors">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+
+                <div id="adminServicesList" class="space-y-3">
+                    </div>
+            </div>
+
+            <div class="text-center py-8 space-y-4">
+                <button id="backToCardViewBtn" class="bg-gray-900 hover:bg-gray-800 text-white px-6 py-3 rounded-xl transition-colors text-sm font-medium">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Voltar para o Cartão
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script type="module" src="./js/main.js"></script>
+</body>
+</html>

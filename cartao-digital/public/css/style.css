@@ -1,0 +1,19 @@
+/* Estilos personalizados para o cartão */
+.fade-in { animation: fadeIn 0.5s ease-in; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.hover-lift { transition: all 0.3s ease; }
+.hover-lift:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+.glass-effect { backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.9); }
+.profile-shadow { box-shadow: 0 0 0 4px rgba(255, 255, 255, 1), 0 0 0 8px rgba(0, 0, 0, 0.1); }
+
+/* Estilo para o "handle" de arrastar (drag and drop) */
+.drag-handle {
+    cursor: grab;
+    touch-action: none; /* Previne o toque padrão em alguns dispositivos */
+}
+
+.sortable-ghost {
+    opacity: 0.2;
+    background-color: #f3f4f6; /* gray-100 */
+    border: 2px dashed #9ca3af; /* gray-400 */
+}
